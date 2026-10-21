@@ -43,8 +43,10 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
             raise RuntimeError("SERVICE_KEY must be configured in this repo's .env")
         if not cfg.fake and (not cfg.primary.api_key or not cfg.primary.model):
             raise RuntimeError("Configure LLM_API_KEY and LLM_MODEL")
+        if not cfg.fake and cfg.fallback and (not cfg.fallback.api_key or not cfg.fallback.model):
+            raise RuntimeError("Configure FALLBACK_API_KEY and FALLBACK_MODEL, or clear FALLBACK_BASE_URL")
         app.state.corrections.initialize()
-        async with httpx.AsyncClient(transport=transport) as client:
+        async with httpx.AsyncClient(transport=transport, trust_env=False) as client:
             app.state.provider = Provider(cfg, client)
             yield
 
@@ -54,10 +56,13 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
 
     @app.middleware("http")
     async def request_log(request: Request, call_next):
-        request.state.request_id = str(uuid.uuid4())
+        transport_id = str(uuid.uuid4())
+        request.state.request_id = transport_id
         start = time.perf_counter()
         response = await call_next(request)
-        response.headers["X-Request-ID"] = request.state.request_id
+        # Caller IDs can contain arbitrary Unicode. HTTP header values cannot.
+        caller_id = request.state.request_id
+        response.headers["X-Request-ID"] = caller_id if caller_id.isascii() and caller_id.isprintable() else transport_id
         logger.info("request", extra={"fields": {
             "request_id": request.state.request_id, "method": request.method,
             "path": request.url.path, "status": response.status_code,
@@ -99,6 +104,8 @@ def create_app(settings: Settings | None = None, transport: httpx.AsyncBaseTrans
     async def diacritize(body: DiacritizeBody, request: Request):
         check_length(body.text)
         request.state.request_id = body.request_id or request.state.request_id
+        if not body.text.strip():
+            raise ServiceError(422, "validation_failed", reason="empty", attempts=0, detail="Input text is empty.")
         start = time.perf_counter()
         usage = {"prompt_tokens": 0, "completion_tokens": 0, "cost_usd": 0.0}
         for attempt in (1, 2):

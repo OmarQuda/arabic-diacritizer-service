@@ -35,6 +35,19 @@ def test_missing_auth(client):
     assert client.post("/v1/corrections", json={}).status_code == 401
 
 
+@pytest.mark.parametrize("request_id", ["معرف", "line\nbreak"])
+def test_non_header_safe_request_id(client, headers, request_id):
+    response = client.post("/v1/diacritize", headers=headers, json={"text": "قلم", "request_id": request_id})
+    assert response.status_code == 200
+    assert response.json()["request_id"] == request_id
+    assert response.headers["X-Request-ID"].isascii()
+
+
+def test_whitespace_input(client, headers):
+    response = client.post("/v1/diacritize", headers=headers, json={"text": " \n"})
+    assert response.json() == {"error": "validation_failed", "reason": "empty", "attempts": 0, "detail": "Input text is empty."}
+
+
 def test_health_and_success(client, headers):
     assert client.get("/health/live").json() == {"status": "ok"}
     assert client.get("/health/ready").json() == {"status": "ready", "fake_provider": True, "provider": "fake", "model": "dictionary-v1"}

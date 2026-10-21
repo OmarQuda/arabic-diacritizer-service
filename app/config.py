@@ -29,6 +29,8 @@ class Settings:
     max_chars: int
     db_path: Path
     log_text: bool = False
+    host: str = "127.0.0.1"
+    port: int = 8020
 
 
 def load_settings() -> Settings:
@@ -61,9 +63,12 @@ def load_settings() -> Settings:
         setting("FAKE_PROVIDER", "0") == "1", float(setting("TIMEOUT_S", "20")),
         int(setting("MAX_RETRIES", "1")), int(setting("MAX_CHARS", "5000")),
         ROOT / setting("DB_PATH", "data/corrections.db"), setting("LOG_TEXT", "0") == "1",
+        setting("HOST", "127.0.0.1"), int(setting("PORT", "8020")),
     )
     if settings.timeout_s <= 0 or not 0 <= settings.max_retries <= 5 or settings.max_chars < 1:
         raise ValueError("Invalid timeout, retry, or text limit configuration")
     if any(e.input_rate < 0 or e.output_rate < 0 for e in (settings.primary, fallback)):
         raise ValueError("Token prices must be non-negative")
+    if not 1 <= settings.port <= 65535:
+        raise ValueError("PORT must be in 1..65535")
     return settings

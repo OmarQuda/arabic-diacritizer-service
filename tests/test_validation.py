@@ -19,6 +19,8 @@ def test_valid(source, output):
     ("ذهب  الولد", "changed_letters"), ("ذهب الولد!", "changed_letters"),
     ("```arabic\nذهب الولد\n```", "markdown"), ("**ذهب الولد**", "markdown"),
     ("# ذهب الولد", "markdown"), ('{"text":"ذهب الولد"}', "json"),
+    ("*ذهب الولد*", "markdown"), ("- ذهب الولد", "markdown"),
+    ("> ذهب الولد", "markdown"), ("~~~\nذهب الولد\n~~~", "markdown"),
     ('["ذهب الولد"]', "json"), ("The boy", "changed_letters"),
 ])
 def test_reasons(output, reason):

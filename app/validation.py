@@ -3,7 +3,10 @@ import re
 from dataclasses import dataclass
 
 DIACRITICS = frozenset(chr(c) for c in (*range(0x064B, 0x0653), 0x0670))
-_MARKDOWN = re.compile(r"```|`|\*\*|__|(?m:^\s{0,3}#{1,6}\s)|\[[^\]]+\]\([^)]+\)")
+_MARKDOWN = re.compile(
+    r"```|~~~|`|\*\*|__|\*[^*\n]+\*|_[^_\n]+_|"
+    r"(?m:^\s{0,3}(?:#{1,6}\s|>\s|[-*+]\s|\d+\.\s))|\[[^\]]+\]\([^)]+\)"
+)
 
 
 def strip_diacritics(text: str) -> str:
