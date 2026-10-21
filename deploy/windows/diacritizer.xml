@@ -1,0 +1,27 @@
+<service>
+  <id>ArabicDiacritizer</id>
+  <name>Arabic Diacritizer</name>
+  <description>Private Arabic diacritization worker for the ASP.NET API.</description>
+  <executable>%BASE%\.venv\Scripts\python.exe</executable>
+  <arguments>-m uvicorn app.main:app --host 127.0.0.1 --port 8020 --no-access-log</arguments>
+  <workingdirectory>%BASE%</workingdirectory>
+  <env name="PYTHONUTF8" value="1"/>
+  <env name="PYTHONDONTWRITEBYTECODE" value="1"/>
+  <env name="DIACRITIZER_SKIP_DOTENV" value="0"/>
+  <!-- app.config reads %BASE%\.env. No credentials in this XML. -->
+  <startmode>Automatic</startmode>
+  <delayedAutoStart>true</delayedAutoStart>
+  <serviceaccount>
+    <username>NT AUTHORITY\LocalService</username>
+  </serviceaccount>
+  <onfailure action="restart" delay="5 sec"/>
+  <onfailure action="restart" delay="5 sec"/>
+  <onfailure action="restart" delay="5 sec"/>
+  <resetfailure>1 hour</resetfailure>
+  <stoptimeout>20 sec</stoptimeout>
+  <logpath>%BASE%\logs</logpath>
+  <log mode="roll-by-size">
+    <sizeThreshold>10240</sizeThreshold>
+    <keepFiles>8</keepFiles>
+  </log>
+</service>
