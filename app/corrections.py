@@ -1,4 +1,5 @@
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -22,10 +23,15 @@ class Corrections:
                 diacritics_changed INTEGER NOT NULL CHECK(diacritics_changed >= 0)
             )""")
 
+    @contextmanager
     def connect(self):
         db = sqlite3.connect(self.path, timeout=5)
         db.row_factory = sqlite3.Row
-        return db
+        try:
+            with db:
+                yield db
+        finally:
+            db.close()
 
     def store(self, *, request_id: str, input: str, model_output: str, corrected: str, note: str) -> dict:
         if strip_diacritics(corrected) != strip_diacritics(input):
