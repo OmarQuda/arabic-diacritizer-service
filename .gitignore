@@ -1,0 +1,11 @@
+.env
+.venv/
+.uv-cache/
+.python/
+__pycache__/
+.pytest_cache/
+*.pyc
+data/
+logs/
+.coverage
+deploy/windows/diacritizer.exe
