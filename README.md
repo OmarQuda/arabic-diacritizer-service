@@ -8,6 +8,11 @@ correct outputs, and 100 fake HTTP requests had 2.32 ms median and 2.74 ms p95 l
 I verified those results with `uv run python scripts/measure.py` over a real
 loopback HTTP socket and `uv run pytest -q`, which passed 93 tests on Python 3.14.8.
 
+With a real provider (OpenAI gpt-4.1-mini), 20/20 sample sentences passed base-text
+validation, 1 of them after one repair call, at 1.04 s median latency
+(`uv run python scripts/real_check.py`). That run checks text preservation only;
+scoring vowel accuracy needs a gold diacritized corpus.
+
 ## Run locally
 
 Python >=3.11 and [uv](https://docs.astral.sh/uv/) are required. PowerShell:
