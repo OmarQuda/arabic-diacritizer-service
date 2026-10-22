@@ -69,7 +69,7 @@ class Provider:
                     failure = ServiceError(504, "provider_timeout")
                 except httpx.HTTPStatusError as exc:
                     if exc.response.status_code < 500:
-                        raise ServiceError(502, "provider_error", detail="Upstream rejected the request.") from None
+                        raise ServiceError(502, "provider_error", detail=f"Upstream rejected the request (HTTP {exc.response.status_code}).") from None
                     failure = ServiceError(502, "provider_error", detail="Upstream server failed.")
                 except httpx.RequestError:
                     raise ServiceError(502, "provider_error", detail="Upstream connection failed.") from None
