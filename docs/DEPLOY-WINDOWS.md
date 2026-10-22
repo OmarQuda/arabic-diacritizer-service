@@ -39,15 +39,12 @@ The only download URL in `install.ps1` is the official fixed release:
 [WinSW v2.12.0](https://github.com/winsw/winsw/releases/tag/v2.12.0).
 The artifact is `WinSW-x64.exe`. No binary is included in this repository.
 
-`$WinSWSha256` is deliberately `TODO_VERIFIED_SHA256_FOR_WINSW_2_12_0_X64`.
-An independently verified upstream checksum was unavailable during this build.
-Obtain and verify the artifact's identity using your organization's trusted review
-process, calculate its SHA256, and replace the placeholder in `install.ps1` with
-the approved 64 hexadecimal characters. A checksum calculated from an unverified
-download alone is not identity verification. Do not replace the check with a bypass.
-With the placeholder present the installer fails before creating folders, downloading
-or installing anything. When pinned, it downloads on invocation and compares SHA256
-before executing WinSW. A mismatch removes the download and stops installation.
+`$WinSWSha256` is empty, so installation stops before creating directories or
+downloading anything. Obtain the artifact through your organization's trusted
+review process, verify its identity, and set the approved SHA256 in `install.ps1`.
+A hash of an unverified download alone does not establish its identity. The
+installer compares the download against the pin before executing WinSW and removes
+the download on a mismatch.
 
 ## 3. Configure credentials and permissions
 
@@ -215,7 +212,7 @@ and later removal. It does not delete any directories recursively.
 
 | Symptom | Check |
 | --- | --- |
-| Installer immediately stops | Replace the marked checksum placeholder only after independent verification |
+| Installer immediately stops | Set the WinSW checksum after independent artifact verification |
 | Python cannot be started after logout/reboot | All-users interpreter path and LocalService execute permission; never use a profile venv base |
 | Service starts and exits | Wrapper/error logs, missing own `.env`, empty service key, invalid provider configuration or denied DB directory |
 | Health works but diacritization returns 401 | Header name, current/previous key, deployed `.env`, and restart after edits |

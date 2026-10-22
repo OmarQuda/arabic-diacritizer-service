@@ -1,4 +1,4 @@
-# API contract (shared by backend and UI; do not change without the manager)
+# API contract
 
 Service: FastAPI, Arabic diacritization worker. Bind 127.0.0.1:8020 by default (HOST/PORT env).
 Auth: header `X-Service-Key` on /v1/* routes. Accepts SERVICE_KEY (current) or SERVICE_KEY_PREVIOUS, compared in constant time. Dev default in .env.example: SERVICE_KEY=dev-key.

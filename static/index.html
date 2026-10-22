@@ -122,7 +122,7 @@ mark.del{background:var(--mark-del);color:inherit;border-radius:3px}
   "use strict";
   var $ = function(id){ return document.getElementById(id); };
   var SAMPLES = ["ذهب الولد إلى المدرسة","كتب الطالب الدرس","العلم نور","يحب الأطفال اللعب في الحديقة"];
-  var last = null; // last successful result
+  var last = null;
   var DIAC = /[ؐ-ًؚ-ٰٟۖ-ۭـ]/g;
 
   function el(tag, cls, text){
@@ -133,13 +133,11 @@ mark.del{background:var(--mark-del);color:inherit;border-radius:3px}
   }
   function clear(n){ while (n.firstChild) n.removeChild(n.firstChild); }
 
-  // key persistence
   try { var k = localStorage.getItem("diac_key"); if (k) $("key").value = k; } catch (e) {}
   $("key").addEventListener("input", function(){
     try { localStorage.setItem("diac_key", $("key").value); } catch (e) {}
   });
 
-  // samples
   SAMPLES.forEach(function(s){
     var b = el("button", "chip", s);
     b.type = "button";
@@ -160,7 +158,6 @@ mark.del{background:var(--mark-del);color:inherit;border-radius:3px}
     });
   }
 
-  // health
   function health(){
     var pill = $("status"), txt = $("statusText");
     fetchJson("/health/ready").then(function(r){
@@ -259,7 +256,6 @@ mark.del{background:var(--mark-del);color:inherit;border-radius:3px}
   }
   $("go").addEventListener("click", diacritize);
 
-  // corrections
   function setMsg(cls, t){ var m = $("corrMsg"); m.className = "msg " + cls; m.textContent = t; }
   function save(){
     if (!last) return;

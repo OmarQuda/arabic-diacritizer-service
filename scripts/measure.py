@@ -27,7 +27,6 @@ def validation_measure(n):
     counts = dict.fromkeys(("added_word", "removed_word", "changed_letter", "markdown", "json", "translation"), 0)
     good = 0
     for i in range(n):
-        # Distinct base strings, including punctuation and Western digits.
         source = f"ذهب الولد إلى المدرسة {i}"
         correct = f"ذَهَبَ الْوَلَدُ إِلَى الْمَدْرَسَةِ {i}"
         corruptions = {
@@ -50,7 +49,7 @@ def validation_measure(n):
 async def latency_measure(n):
     cfg = Settings("measure-only", "", Endpoint("unused", "", "", ""), None, True, 1, 0, 5000,
                    ROOT / "data" / "measure.db")
-    # Prebind a free loopback port to avoid a bind race. No daemon or child survives this script.
+    # Bind before starting the server to avoid a port allocation race.
     sock = socket.socket()
     sock.bind(("127.0.0.1", 0))
     sock.listen(128)

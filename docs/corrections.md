@@ -4,7 +4,7 @@
 It checks `strip_diacritics(corrected) == strip_diacritics(input)` before inserting.
 The original model output is retained even if it was invalid, so a human can
 correct a rejected response. The store never silently rewrites any of the text.
-`request_id` is caller supplied or a generated UUID, and `note` defaults to `""`.
+`request_id` is caller supplied or a UUID, and `note` defaults to `""`.
 
 SQLite database: `DB_PATH`, default `data/corrections.db`, relative to the application
 root unless absolute. Startup creates its directory and table. Each operation uses

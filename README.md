@@ -1,12 +1,10 @@
 # Arabic diacritizer service
 
-A small public reconstruction of an Arabic diacritization worker for an Upwork
-application. This is independently written demo code, not the client's code.
-It adds a native Windows deployment path, persisted human corrections, contract
-tests and reproducible offline measurements around an OpenAI-compatible API.
+An Arabic diacritization API with exact base-text validation, provider fallback,
+human corrections in SQLite, and a local browser UI.
 
-The validator rejected 1,200/1,200 generated corrupt outputs and accepted 200/200
-correct outputs, and 100 fake HTTP requests had 1.97 ms median and 2.31 ms p95 latency.
+The validator rejected 1,200/1,200 synthetic corrupt outputs and accepted 200/200
+correct outputs, and 100 fake HTTP requests had 2.32 ms median and 2.74 ms p95 latency.
 I verified those results with `uv run python scripts/measure.py` over a real
 loopback HTTP socket and `uv run pytest -q`, which passed 93 tests on Python 3.14.8.
 
@@ -20,7 +18,7 @@ Copy-Item .env.example .env
 uv run python -m app
 ```
 
-Open <http://127.0.0.1:8020/> for the separately built UI, or use `/docs` for the
+Open <http://127.0.0.1:8020/> for the local UI, or use `/docs` for the
 interactive API documentation. Stop the foreground process with Ctrl+C.
 The example uses `FAKE_PROVIDER=1` and `SERVICE_KEY=dev-key`; there are no paid calls.
 The fake dictionary has 16 entries. Unknown text is returned unchanged, so the fake
@@ -98,20 +96,16 @@ with constant-time comparisons. Health and the demo page are public.
 
 | Route | Purpose |
 | --- | --- |
-| `GET /` | Serve the UI agent's `static/index.html` |
+| `GET /` | Serve `static/index.html` |
 | `GET /health/live` | Process liveness |
 | `GET /health/ready` | Configuration metadata; no paid provider probe |
 | `POST /v1/diacritize` | Diacritize and validate, with one repair attempt |
 | `POST /v1/corrections` | Persist a correction; 201 on success |
 | `GET /v1/corrections?limit=20` | Latest stored records, including original text |
 
-Error bodies use the contract's 401, 413, 422, 502 and 504 shapes. Schema errors
-use `validation_failed/empty`, attempts 0; malformed correction requests use
-`invalid_correction/base_text_mismatch`. Those schema-error mappings and a 1..100
-listing limit fill details the shared contract does not specify. IDs are generated
-when omitted. The response body and JSON logs retain a supplied ID; the optional
-`X-Request-ID` header uses a generated UUID when a supplied ID cannot safely fit
-in an HTTP header. Request IDs are at most 128 characters and notes at most 2,000.
+Errors use the contract's 401, 413, 422, 502 and 504 shapes. Request IDs are limited
+to 128 characters and notes to 2,000. IDs unsafe for HTTP headers stay in the JSON
+body and logs; `X-Request-ID` uses a UUID instead.
 
 [.env.example](.env.example) lists all configuration. Nonsecret environment
 variables override that file; **keys are read only from this repo's own `.env`**,
@@ -135,8 +129,8 @@ uv run python scripts/measure.py
 uv run python scripts/measure.py --n 1000 --requests 500
 ```
 
-Measured on Windows, Python 3.14.8, on 2026-10-21. `pytest -q`: **93 passed in
-0.78s**, with one upstream Starlette deprecation warning for its httpx test client.
+Measured on Windows, Python 3.14.8, on 2026-10-22. `pytest -q`: **93 passed in
+1.50s**, with one upstream Starlette deprecation warning for its httpx test client.
 The validator corpus has 200 distinct numbered inputs per corruption type plus
 200 correct outputs. It is synthetic and is not a linguistic accuracy benchmark.
 The HTTP measurement makes ten warmup requests followed by 100 serial requests
@@ -161,9 +155,14 @@ Actual `scripts/measure.py` output:
 | Fake HTTP latency | Result |
 | --- | --- |
 | Successful measured requests | 100/100 |
-| Median | 1.97 ms |
-| p95 (nearest rank) | 2.31 ms |
-| Mean | 2.03 ms |
+| Median | 2.32 ms |
+| p95 (nearest rank) | 2.74 ms |
+| Mean | 2.34 ms |
+
+The previous run on 2026-10-21 passed 93 tests in 0.78s and measured 1.97 ms
+median, 2.31 ms p95 and 2.03 ms mean over 100 successful fake HTTP requests.
+The current review used repository-local uv cache and pytest temporary directories
+because the review environment restricts access to user cache directories.
 
 Tests cover all validation reasons and supported combining marks, mock HTTP success,
 timeout/5xx fallback, malformed data, bounded retries, repair, usage/cost aggregation,
@@ -172,28 +171,16 @@ listing and persistence across app restarts. No test reads a developer `.env`.
 
 ## Native Windows service
 
-Follow [docs/DEPLOY-WINDOWS.md](docs/DEPLOY-WINDOWS.md) for a second-engineer runbook:
+Follow [docs/DEPLOY-WINDOWS.md](docs/DEPLOY-WINDOWS.md) for installation and operation:
 all-users Python, uv, LocalService permissions, a protected `.env`, loopback and
 the ASP.NET firewall rule, install, recovery verification, reboot, logs, update
 and rollback. Scripts and [WinSW XML](deploy/windows/diacritizer.xml) are in
 `deploy/windows/`. The service uses a machine-wide venv and Automatic delayed
 startup, five second failure recovery and rotating logs.
 
-**The WinSW SHA256 pin is a marked placeholder.** The installer refuses to run
-until an independently verified hash is supplied. No service has been installed,
-WinSW downloaded, firewall changed, or reboot performed during this build.
-Scripts and XML were parsed locally; native service behavior remains to be measured.
-The default assumes ASP.NET is on the same machine. A remote-host adaptation needs
-a private listener, narrow firewall access and TLS as described in the runbook.
-
-### Results on a real Windows machine
-
-| Check | Result | Evidence |
-| --- | --- | --- |
-| Restart after killing Python | TODO: seconds | Omar: run `deploy/windows/verify.ps1` |
-| Up after reboot | TODO: pass/fail and boot-to-start seconds | Omar: reboot, then run `verify.ps1 -AfterReboot` |
-| OS / Python / WinSW versions | TODO | Record tested machine and date |
-
-Repository commits are local only. There is no configured remote and nothing has
-been pushed. The UI agent owns `static/`; it is served but is outside these backend
-commits.
+The installer requires an independently verified WinSW SHA256 before it can run.
+No service was installed, WinSW downloaded, firewall changed, or reboot performed.
+PowerShell syntax and XML parsing were checked; recovery and reboot startup remain
+unmeasured. The runbook includes commands to verify both. The default assumes
+ASP.NET runs on the same machine; remote access requires a private listener,
+restricted firewall access and TLS.

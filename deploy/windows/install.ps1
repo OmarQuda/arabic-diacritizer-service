@@ -8,9 +8,8 @@ param(
 )
 $ErrorActionPreference = 'Stop'
 
-# TODO: independently verify the official v2.12.0 x64 artifact, then pin its SHA256 here.
-# Intentionally fail closed. Never accept a checksum fetched beside the untrusted binary.
-$WinSWSha256 = 'TODO_VERIFIED_SHA256_FOR_WINSW_2_12_0_X64'
+# An empty pin blocks installation until the artifact is independently verified.
+$WinSWSha256 = ''
 $WinSWUrl = 'https://github.com/winsw/winsw/releases/download/v2.12.0/WinSW-x64.exe'
 if ($WinSWSha256 -notmatch '^[A-Fa-f0-9]{64}$') {
     throw 'Pin an independently verified WinSW v2.12.0 x64 SHA256 in install.ps1 before running. Nothing installed.'
